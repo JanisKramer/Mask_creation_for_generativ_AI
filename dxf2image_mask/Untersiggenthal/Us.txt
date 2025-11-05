@@ -1,0 +1,3 @@
+Reprojection error stats (pixels):
+ per-point: [6.908, 12.674, 5.138, 0.248, 1.012, 3.416]
+ RMSE: 6.422  median: 4.277  p95: 11.232  max: 12.674
