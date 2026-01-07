@@ -48,7 +48,7 @@ Hard limitation:
 
 From the repo root:
 
-A) Run with file dialogs (creates a config)
+### A) Run with file dialogs (creates a config)
     python DXF_2_Imagemasks\\dxf2image_create_config.py
 
 You will be asked to pick:
@@ -61,7 +61,7 @@ You will be asked to pick:
 
 Then you click 6 points in the image.
 
-B) Re-run without clicking (use the saved config)
+### B) Re-run without clicking (use the saved config)
     python DXF_2_Imagemasks\\dxf2image_load_config.py
 
 Choose:
@@ -94,10 +94,15 @@ Order matters:
 - Keep the DXF clean (only elements that should be projected). Export a minimal DXF if needed.
 - Check reprojection error output (RMSE / max). Large errors usually mean inconsistent
   control points (DXF and/or image clicks).
+  
+  
+## 6) Other folders
+- Parametric_Mask_Creation/: Gradio prototypes for parametric “road plane band” masks. 
+- Reocuring_Elements/: Gradio prototype for placing repeated objects (e.g., trees) and exporting a mask based on the created config file.
 
 
 
-## 6) requirements.txt (dependency list)
+## 7) requirements.txt
 
 
 The repo’s dependency file is 'requirements.txt'. Contents:
