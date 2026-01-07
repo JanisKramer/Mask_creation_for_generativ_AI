@@ -1,4 +1,4 @@
-Mask_creation_for_generativ_AI — Windows Quickstart (all-in-one)
+# Mask_creation_for_generativ_AI
 
 This document combines:
 - Installation (Windows)
@@ -7,9 +7,9 @@ This document combines:
 
 Note: This README/documentation was written with the help of ChatGPT.
 
-============================================================
-1) Install (Windows)
-============================================================
+
+## 1) Install
+
 
 Open a Command Prompt / PowerShell in the repo root.
 
@@ -18,9 +18,9 @@ Install Python packages:
 
 
 
-============================================================
-2) DXF workflow overview
-============================================================
+
+## 2) DXF workflow overview
+
 
 You provide:
 - a street photo
@@ -42,9 +42,9 @@ Hard limitation:
   Reocuring_Elements/
 
 
-============================================================
-3) Quickstart (DXF → mask)
-============================================================
+
+## 3) Quickstart (DXF → mask)
+
 
 From the repo root:
 
@@ -72,9 +72,9 @@ Choose:
 This outputs the DXF elements in the image coordinate system and exports mask/overlay again.
 
 
-============================================================
-4) Input format: the 6-point CSV
-============================================================
+
+## 4) Input format: the 6-point CSV
+
 
 The CSV/TXT must contain exactly 6 rows of:
     x,y
@@ -86,9 +86,9 @@ Order matters:
 - you must click the same points in the image in the same order as in the CSV.
 
 
-============================================================
-5) Tips
-============================================================
+
+## 5) Tips
+
 
 - Point order consistency is the #1 failure mode.
 - Keep the DXF clean (only elements that should be projected). Export a minimal DXF if needed.
@@ -96,9 +96,9 @@ Order matters:
   control points (DXF and/or image clicks).
 
 
-============================================================
-6) requirements.txt (dependency list)
-============================================================
+
+## 6) requirements.txt (dependency list)
+
 
 The repo’s dependency file is 'requirements.txt'. Contents:
 
