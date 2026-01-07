@@ -1,149 +1,130 @@
 # Mask_creation_for_generativ_AI
 
-Toolbox for creating **perspective-correct image masks** for streetscape edits (e.g., inpainting / image-to-image).
-The repo contains two main approaches:
+Toolbox for creating **perspective-correct binary masks** for street-scene image editing.
 
-1. **Parametric mask creation** (metric bands on a road plane; e.g., lane/sidewalk areas) via a Gradio UI.
-2. **DXF → image masks** by projecting 2D CAD geometry onto a street photo using a homography from matched control points.
+**Main focus:** `DXF_2_Imagemasks/` — project **2D CAD/DXF geometry** into a street photo (homography) and export a mask for inpainting / generative pipelines.
 
-This is meant to support workflows where edits must stay **geometrically plausible** (perspective consistent) and at least **roughly metric** (e.g., “a 1.5 m bike lane” is actually 1.5 m in the scene).
+> This README was created with the help of ChatGPT.
 
 ---
 
-## Repository layout
+## What the DXF workflow does
 
-- `Parametric_Mask_Creation/`  
-  Gradio apps to define a road plane in the image and generate masks from metric/parametric inputs.
-  Output examples are written to `Parametric_Mask_Creation/export/`.
+You provide:
+- a street photo
+- a DXF (typically a polygon / outline you want as a mask)
+- **6 control points** in DXF coordinates (CSV)
+- and you click the **same 6 points** in the image (same order)
 
-- `DXF_2_Imagemasks/`  
-  Scripts to project CAD geometry from DXF into the image and rasterize it into a binary mask.
-  Includes example data in `DXF_2_Imagemasks/Untersiggenthal/`.
+The script estimates a homography (optionally with RANSAC), warps the DXF geometry into the image, and writes:
+- `mask.png` (black/white)
+- `overlay.png` (mask visualized on top of the photo)
+- optionally `*_diag.png` (reprojection error vectors)
+- optionally `*_config.json` (so you can re-run without clicking)
 
-- `Reocuring_Elements/`  
-  Prototypes for recurring objects (e.g., tree placement along the road plane) via a Gradio UI.
+### Hard limitation (don’t ignore this)
+This assumes the edited surface is **planar** (road plane). It works for markings/areas on the ground. It will not correctly map vertical objects (facades, poles, cars).
 
 ---
 
-## Installation
+## Install (Windows)
 
 ### 1) Create a virtual environment
-```bash
+
+```bat
 python -m venv .venv
-# Windows
 .venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
 ```
 
 ### 2) Install dependencies
-```bash
+
+```bat
 pip install -r requirements.txt
 ```
 
-#### Note on tkinter (file dialogs)
-Some scripts optionally use `tkinter` for file pickers.
-- Windows/macOS Python usually includes it.
-- On Ubuntu/Debian you may need:
-```bash
-sudo apt-get install python3-tk
+---
+
+## Quickstart (DXF → mask)
+
+From the repo root:
+
+### Option A — Run with file dialogs (fast)
+
+```bat
+python DXF_2_Imagemasks\dxf2image_create_config.py
+```
+
+You will be asked to pick:
+- image
+- DXF
+- output mask path
+- (optional) output overlay path
+- (optional) output config path
+- CSV/TXT file with the 6 DXF control points
+
+Then you click 6 points in the image.
+
+### Option B — Run with explicit paths (reproducible)
+
+Example data is included in `DXF_2_Imagemasks/Untersiggenthal/`.
+
+```bat
+python DXF_2_Imagemasks\dxf2image_create_config.py ^
+  --image DXF_2_Imagemasks\Untersiggenthal\20251031_114405.jpg ^
+  --dxf   DXF_2_Imagemasks\Untersiggenthal\Us_version_1.dxf ^
+  --src-csv DXF_2_Imagemasks\Untersiggenthal\Us.csv ^
+  --out  DXF_2_Imagemasks\Untersiggenthal\mask.png ^
+  --save-overlay DXF_2_Imagemasks\Untersiggenthal\overlay.png ^
+  --save-config  DXF_2_Imagemasks\Untersiggenthal\config.json ^
+  --save-diagnostics DXF_2_Imagemasks\Untersiggenthal\diag.png
 ```
 
 ---
 
-## Quickstart
+## Re-run without clicking (use the saved config)
 
-### A) Parametric masks (road-plane “bands”) — Gradio UI
+If you saved a `config.json`, you can generate the mask again without clicking points:
 
-The most recent parametric script in this repo is:
-
-```bash
-python Parametric_Mask_Creation/251028_plane_negative_fix_v4_5.py
+```bat
+python DXF_2_Imagemasks\dxf2image_load_config.py ^
+  --image DXF_2_Imagemasks\Untersiggenthal\20251031_114405.jpg ^
+  --dxf   DXF_2_Imagemasks\Untersiggenthal\Us_version_1.dxf ^
+  --config DXF_2_Imagemasks\Untersiggenthal\config.json ^
+  --out DXF_2_Imagemasks\Untersiggenthal\mask_from_config.png ^
+  --save-overlay DXF_2_Imagemasks\Untersiggenthal\overlay_from_config.png
 ```
-
-Then open the shown local URL (typically `http://127.0.0.1:7860`) in your browser.
-
-Typical flow:
-1. Load a street image.
-2. Define the **road plane** in the image (4 corner points).
-3. Provide a **metric reference** (e.g., a known length / street width) so the bands can be scaled.
-4. Add band definitions (in cm; negatives allowed) to generate masks.
-5. Export masks to `Parametric_Mask_Creation/export/` (combined + per-band masks + `meta.json`).
-
-Outputs (example names):
-- `mask_combined.png`
-- `mask_01_<label>.png`, `mask_02_<label>.png`, ...
-- `meta.json` (inputs and geometry metadata)
 
 ---
 
-### B) Recurring elements (tree mask prototype) — Gradio UI
+## Input format: the 6-point CSV
 
-```bash
-python Reocuring_Elements/2510131_reocuring_object_v3.py
-```
+`--src-csv` must contain **exactly 6 rows** of `x,y` in DXF units.
+- Header is allowed.
+- Comma or semicolon separation is accepted.
 
-Open the local Gradio URL (typically `http://127.0.0.1:7861`).
-
-This tool focuses on fast placement of repeated objects (e.g., trees) along a street plane and exporting a corresponding mask.
+The order matters: you must click the **same points** in the image in the **same order**.
 
 ---
 
-### C) DXF → image mask (CAD projection)
+## Tips (things that actually matter)
 
-Main script:
-```bash
-python DXF_2_Imagemasks/dxf2image_create_config.py --help
-```
-
-Minimal run (with file dialogs if you omit paths):
-```bash
-python DXF_2_Imagemasks/dxf2image_create_config.py
-```
-
-Typical run (explicit paths):
-```bash
-python DXF_2_Imagemasks/dxf2image_create_config.py \
-  --image DXF_2_Imagemasks/Untersiggenthal/20251031_114405.jpg \
-  --dxf   DXF_2_Imagemasks/Untersiggenthal/Us_version_1.dxf \
-  --src-csv DXF_2_Imagemasks/Untersiggenthal/Us.csv \
-  --out  DXF_2_Imagemasks/Untersiggenthal/Us_Maske_1.png \
-  --save-overlay DXF_2_Imagemasks/Untersiggenthal/Us_Overlay_1.png
-```
-
-How it works (high level):
-1. Provide **6 DXF coordinates** (from `--src-csv` or `--src-corners`).
-2. Click the **same 6 points** in the image in the same order.
-3. A homography is estimated (optionally with RANSAC).
-4. CAD geometry is warped into the image and rasterized as a black/white mask.
-
-Optional outputs:
-- `--save-overlay` : mask visualized on top of the photo
-- `--save-diagnostics` : per-point error vectors + diagnostics overlay
-- `--save-config` : JSON config to reproduce the run (useful for batch processing)
-
-> Note: `DXF_2_Imagemasks/dxf2image_load_config.py` expects helper functions from a `dxf2mask.py`
-> located in the same folder. In this repo, the older implementation is in `DXF_2_Imagemasks/old/`.
+- **Point order consistency** is more important than “clockwise”.
+- Use `--ransac` if one click might be noisy:
+  ```bat
+  python DXF_2_Imagemasks\dxf2image_create_config.py --ransac
+  ```
+- If your DXF has multiple layers, restrict using `--layer <name>`.
+- Look at the printed reprojection error stats (RMSE / max). If it’s large, your clicks are inconsistent.
 
 ---
 
-## Common pitfalls (aka: what breaks this)
+## Other folders (secondary)
 
-- **Planar assumption**: Homography/IPM assumes the edited surface is a plane (the road). Vertical objects (façades, cars) do not map correctly.
-- **Occlusions**: If curbs/markings are blocked (parked cars), “metric” placement becomes uncertain.
-- **Weak scale**: If you only use “street width” with noisy detection, scale drift happens. A known two-point distance is more reliable.
-- **DXF layering**: If the DXF has multiple layers, use `--layer` to restrict which entities are rasterized.
-
----
-
-## Suggested next steps (future work)
-
-- Semi-automatic ground-plane scaffold via segmentation + minimal user correction, then template placement (mask as an internal artifact).
-- Export both raster masks and vector primitives (DXF/SVG) for clean downstream editing.
-- Add a small test set + timing benchmark (mask creation time vs. manual editing).
+- `Parametric_Mask_Creation/`: Gradio prototypes for parametric “road plane band” masks.
+- `Reocuring_Elements/`: Gradio prototype for placing repeated objects (e.g., trees) and exporting a mask.
 
 ---
 
 ## License
 
-No license file is included yet. Add a `LICENSE` if you plan to share or reuse this code outside personal/project work.
+No license is included yet.
