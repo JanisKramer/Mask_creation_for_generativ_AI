@@ -1,0 +1,5 @@
+numpy>=1.24
+opencv-python>=4.8
+gradio>=4.0
+ezdxf>=1.1
+Pillow>=10.0
